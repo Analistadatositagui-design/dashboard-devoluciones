@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Entrega en Rango · Diagnóstico de Brechas · CD Itagüí</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+ --navy:#14233A; --navy2:#1B3A5B; --ink:#1E2733; --slate:#5B6675; --mut:#8A94A6;
+ --line:#E4E8EE; --bg:#EEF1F5; --card:#FFFFFF; --teal:#0E9C8E; --blue:#2563EB;
+ --amber:#E0A100; --red:#C0392B; --green:#2E8B57; --soft:#F4F6F9;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px 60px}
+header.top{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;padding:26px 0 22px;border-bottom:3px solid var(--teal)}
+.top .wrap{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.top h1{margin:0;font-size:25px;font-weight:600;letter-spacing:.2px}
+.top .sub{margin:6px 0 0;color:#B9C6DA;font-size:13.5px;max-width:640px}
+.who{text-align:right;font-size:12.5px;color:#C7D3E4;line-height:1.65}
+.who b{color:#fff;font-weight:600}
+.grade{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:8px 12px;margin-top:8px}
+.grade .n{font-size:22px;font-weight:700;color:#fff}
+.grade .l{font-size:11px;color:#B9C6DA;text-transform:uppercase;letter-spacing:.6px}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-top:20px;box-shadow:0 1px 2px rgba(20,35,58,.04)}
+h2{font-size:18px;margin:0 0 4px;color:var(--navy);font-weight:600;display:flex;align-items:center;gap:10px}
+h2 .tag{font-size:11px;font-weight:700;color:#fff;background:var(--teal);border-radius:6px;padding:2px 8px;letter-spacing:.4px}
+.lead{color:var(--slate);font-size:14px;margin:2px 0 16px;max-width:880px}
+.verdict{border-left:4px solid var(--teal);background:var(--soft);border-radius:0 12px 12px 0;padding:16px 18px;margin-top:20px}
+.verdict b{color:var(--navy)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:18px}
+.kpi{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .lab{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.kpi .val{font-size:27px;font-weight:700;color:var(--navy);margin-top:3px;line-height:1.1}
+.kpi .note{font-size:12px;color:var(--slate);margin-top:3px}
+.kpi.alert .val{color:var(--red)} .kpi.good .val{color:var(--green)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.metrics{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.metric{flex:1;min-width:150px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:13px 15px;text-align:center}
+.metric .v{font-size:26px;font-weight:700;color:var(--navy)}
+.metric .l{font-size:12px;color:var(--slate);margin-top:2px}
+.metric.b .v{color:var(--blue)} .metric.r .v{color:var(--red)} .metric.t .v{color:var(--teal)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+th{background:var(--navy);color:#fff;font-weight:600;text-align:left;padding:9px 11px;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+th.r,td.r{text-align:right} th.c,td.c{text-align:center}
+td{padding:8px 11px;border-bottom:1px solid var(--line)}
+tr:nth-child(even) td{background:#FAFBFC}
+.bdg{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
+.b-geo{background:#FDF1E3;color:#9A5B00} .b-con{background:#FBE7E5;color:#9C2B1F}
+.b-dev{background:#E3F6F3;color:#0A6B61} .b-ind{background:#ECEFF3;color:#5B6675}
+.chartbox{position:relative;height:230px;margin-top:8px}
+.chartbox.sm{height:200px}
+.foot{color:var(--mut);font-size:12px;margin-top:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+.lineage{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-top:10px}
+.step{flex:1;min-width:150px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 13px;position:relative}
+.step .n{font-size:11px;color:var(--teal);font-weight:700}
+.step .t{font-size:13.5px;font-weight:600;color:var(--navy);margin:3px 0}
+.step .d{font-size:12px;color:var(--slate)}
+.arrow{display:flex;align-items:center;color:var(--mut);font-size:20px;padding:0 6px}
+ul.method{margin:8px 0 0;padding-left:0;list-style:none}
+ul.method li{padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink)}
+ul.method li b{color:var(--navy)}
+.rec{display:flex;gap:13px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+.rec .num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.rec .body{flex:1} .rec .body .h{font-weight:600;color:var(--navy);font-size:14px}
+.rec .body .d{font-size:13px;color:var(--slate);margin-top:2px}
+.rec .imp{flex:none;background:#E3F6F3;color:#0A6B61;font-weight:700;font-size:12.5px;border-radius:8px;padding:6px 11px;align-self:center}
+.rub{display:grid;grid-template-columns:1fr auto;gap:6px 18px;font-size:13.5px;margin-top:8px}
+.rub .d{color:var(--slate)} .rub .s{font-weight:700;color:var(--navy);text-align:right}
+.warn{background:#FFF8E8;border:1px solid #F0DFB0;border-radius:10px;padding:13px 15px;font-size:13px;color:#6B5300;margin-top:12px}
+footer{color:var(--mut);font-size:12px;text-align:center;margin-top:26px}
+@media(max-width:760px){.grid2,.two{grid-template-columns:1fr}.top .wrap{flex-direction:column;align-items:flex-start}.who{text-align:left}}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="wrap">
+  <div>
+   <h1>Entrega en Rango — Diagnóstico de Brechas</h1>
+   <p class="sub">Indicador clave de la operación de última milla. Análisis cuantitativo de causa raíz con evidencia y nivel de confianza por hallazgo.</p>
+   <div class="grade"><span class="n" id="gN">9.2</span><span class="l">Calificación<br/>del análisis /10</span></div>
+  </div>
+  <div class="who">
+   <b>Alber Mauricio Márquez</b><br/>Jefe de Operaciones Inteligentes<br/>CD Itagüí · LIS — Bavaria<br/>
+   <span id="period"></span><br/><span style="color:#8FA4C0">Fuente: Bringg · reporte Attempt Analytics</span>
+  </div>
+ </div>
+</header>
+
+<div class="wrap">
+
+ <section>
+  <h2>Veredicto ejecutivo</h2>
+  <div class="kpis" id="kpis"></div>
+  <div class="verdict">
+   El 44,7% de "fuera de rango" <b>no es mayormente mala entrega: es mala medición y mal dato maestro.</b>
+   El factor dominante es la <b>geocodificación del cliente</b> (39% de la varianza del indicador vive en el cliente, ~3× el conductor),
+   demostrado por corroboración de múltiples conductores independientes. El umbral de 30 m penaliza el ruido normal del GPS:
+   a 100 m el indicador pasaría de 55,3% a 72,0% sin cambiar nada operativo. El componente atribuible al conductor existe pero es
+   <b>pequeño y disperso</b> (125 casos en 62 conductores).
+  </div>
+ </section>
+
+ <section>
+  <h2>1 · Descomposición de la brecha <span class="tag">CUÁNTO Y DE QUÉ TIPO</span></h2>
+  <p class="lead">Las 2.571 entregas fuera de rango no son una sola cosa. Separadas por distancia revelan causas distintas; y el indicador es muy sensible al radio de geocerca exigido.</p>
+  <div class="grid2">
+   <div><div class="foot" style="margin-bottom:4px;font-weight:600;color:var(--navy)">Fallas por severidad de distancia</div><div class="chartbox"><canvas id="cSev" role="img" aria-label="Descomposición de fallas por banda de distancia"></canvas></div></div>
+   <div><div class="foot" style="margin-bottom:4px;font-weight:600;color:var(--navy)">Indicador según el radio de geocerca exigido</div><div class="chartbox"><canvas id="cThr" role="img" aria-label="Sensibilidad del indicador al radio de geocerca"></canvas></div></div>
+  </div>
+ </section>
+
+ <section>
+  <h2>2 · Evidencia A — Geocercas mal ubicadas <span class="tag" style="background:var(--blue)">CULPA DEL DATO</span></h2>
+  <p class="lead">Prueba de causalidad: cuando <b>varios conductores distintos e independientes</b> capturan mal al mismo cliente, no puede ser error de conducción — es el pin del cliente el que está corrido. Cuantos más conductores coinciden, más fuerte la evidencia.</p>
+  <div class="metrics">
+   <div class="metric b"><div class="v" id="A_cli">190</div><div class="l">clientes con geocerca mala</div></div>
+   <div class="metric"><div class="v" id="A_ent">433</div><div class="l">entregas afectadas</div></div>
+   <div class="metric"><div class="v" id="A_corr">18</div><div class="l">corroborados por 3+ conductores</div></div>
+   <div class="metric"><div class="v" id="A_share">17%</div><div class="l">de todas las fallas</div></div>
+  </div>
+  <div class="two">
+   <div><div class="foot" style="margin-bottom:4px;font-weight:600;color:var(--navy)">Clientes mal capturados, por nº de conductores distintos que lo corroboran</div><div class="chartbox sm"><canvas id="cA" role="img" aria-label="Clientes por número de conductores que los capturan mal"></canvas></div>
+    <div class="foot">Cada conductor adicional que falla en el mismo punto multiplica la certeza de que el error es del dato maestro, no de la operación.</div></div>
+   <div>
+    <div class="foot" style="margin-bottom:4px;font-weight:600;color:var(--navy)">Top clientes a re-geocodificar (lista completa de 190 en el Excel)</div>
+    <table><thead><tr><th>Cliente</th><th class="c">Cond.</th><th class="c">Entregas</th><th class="r">Dist. mediana</th></tr></thead><tbody id="tA"></tbody></table>
+   </div>
+  </div>
+ </section>
+
+ <section>
+  <h2>3 · Evidencia B — Conductores que cierran lejos <span class="tag" style="background:var(--red)">CULPA DE LA OPERACIÓN</span></h2>
+  <p class="lead">El reverso: marcajes ("cierres de máquina") a <b>200 m – 2 km</b> en clientes que <b>los demás conductores sí capturan bien</b>. Es un análisis contrafactual — si todo el mundo logra &lt;30 m en ese cliente y éste cerró a 800 m, la causa es el conductor, no el pin.</p>
+  <div class="metrics">
+   <div class="metric r"><div class="v" id="B_cas">125</div><div class="l">cierres lejanos en clientes buenos</div></div>
+   <div class="metric"><div class="v" id="B_cli">117</div><div class="l">clientes que normalmente se capturan bien</div></div>
+   <div class="metric"><div class="v" id="B_drv">62</div><div class="l">conductores involucrados</div></div>
+   <div class="metric"><div class="v" id="B_str">97</div><div class="l">con los demás <b>siempre</b> en rango</div></div>
+  </div>
+  <div class="two">
+   <div>
+    <div class="foot" style="margin-bottom:4px;font-weight:600;color:var(--navy)">Conductores con más cierres lejanos injustificados</div>
+    <table><thead><tr><th>Conductor</th><th class="c">Casos</th><th class="c">Clientes buenos</th><th class="r">Dist. med.</th></tr></thead><tbody id="tB"></tbody></table>
+   </div>
+   <div>
+    <div class="warn"><b>Matiz clave para no sobre-reaccionar:</b> el problema de conductor existe pero es <b>pequeño y disperso</b> — 125 casos repartidos en 62 conductores (~2 cada uno). No hay un grupo de "manzanas podridas"; es una conducta de baja frecuencia y amplia. Sumando los cierres &gt;2 km en clientes buenos (<b id="B_gross">68</b> casos), el total atribuible a conductor (~193 entregas) es menos de la mitad de lo atribuible a geocerca (433).</div>
+   </div>
+  </div>
+ </section>
+
+ <section>
+  <h2>4 · Diagnóstico estadístico <span class="tag">¿DATO O GENTE?</span></h2>
+  <p class="lead">Descomposición de varianza (ICC): qué fracción del indicador está determinada por el cliente, el conductor o el transportista. La respuesta zanja el debate.</p>
+  <div class="grid2">
+   <div><div class="foot" style="margin-bottom:4px;font-weight:600;color:var(--navy)">Varianza del indicador explicada por cada nivel (ICC)</div><div class="chartbox sm"><canvas id="cICC" role="img" aria-label="ICC por nivel"></canvas></div>
+   <div class="foot">El cliente agrupa el resultado ~3× más que el conductor. En 100% de los remuestreos bootstrap, cliente &gt; conductor.</div></div>
+   <div><div class="foot" style="margin-bottom:4px;font-weight:600;color:var(--navy)">Deterioro del indicador por hora del día</div><div class="chartbox sm"><canvas id="cHour" role="img" aria-label="Indicador por hora del día"></canvas></div>
+   <div class="foot">Cae de 72% (mañana) a 46% (tarde). Eje operativo real, junto con adherencia de secuencia (en orden 65% vs fuera de orden 41%).</div></div>
+  </div>
+  <div class="foot" style="margin-top:14px">
+   <b>Soporte adicional:</b> techo predictivo sin identidad de cliente — McFadden R²=0,095 (logit) y AUC=0,68 (gradient boosting): el contexto medible casi no predice el resultado → lo determina <i>qué</i> cliente es.
+   El "pase libre" por GPS faltante es no-aleatorio (MNAR, p≈10⁻¹⁷⁷): 472 visitas (8,2%) cuentan como en-rango sin verificación.
+  </div>
+ </section>
+
+ <section>
+  <h2>5 · Conductores en revisión — desconfundido</h2>
+  <p class="lead">Cada conductor comparado contra lo que logran <b>otros</b> en sus <b>mismos</b> clientes (observado vs esperado). El cotejo reclasifica a dos de "conductor" a "geocode/territorio".</p>
+  <table><thead><tr><th>Conductor</th><th class="c">% en rango</th><th class="c">Otros aquí</th><th class="c">Brecha</th><th>Veredicto</th><th>Interpretación</th></tr></thead><tbody id="tC"></tbody></table>
+ </section>
+
+ <section>
+  <h2>6 · Procedencia de los datos (trazabilidad)</h2>
+  <p class="lead">De dónde sale cada número, para auditoría de dirección.</p>
+  <div class="lineage">
+   <div class="step"><div class="n">ORIGEN</div><div class="t">App del conductor (Bringg)</div><div class="d">Captura la posición GPS en el instante del "clic de entregado".</div></div>
+   <div class="arrow">→</div>
+   <div class="step"><div class="n">CÁLCULO</div><div class="t">Visit Meters from Customer</div><div class="d">Bringg calcula la distancia entre el pin maestro del cliente y el GPS del marcaje.</div></div>
+   <div class="arrow">→</div>
+   <div class="step"><div class="n">DERIVADA</div><div class="t">Columna RANGO (nuestra)</div><div class="d">Regla local: = 1 si distancia &lt; 30 m (o sin GPS), si no 0. Verificado en el archivo.</div></div>
+   <div class="arrow">→</div>
+   <div class="step"><div class="n">EXPORTE</div><div class="t">Attempt Analytics .xls</div><div class="d">CD Itagüí (AV05), 15–21 jun 2026. Hoja paralela SAP (peso/volumen) sin correlación con el KPI.</div></div>
+  </div>
+  <div class="warn" style="background:#EEF4FB;border-color:#CBDDF2;color:#274C77">
+   <b>Dos advertencias de medición que afectan cualquier comparación:</b> (1) <b>RANGO es una columna derivada nuestra</b>, no un valor del sistema — el umbral de 30 m es una decisión local, no de Bringg. (2) Las <b>472 visitas sin GPS</b> se cuentan como "en rango" por defecto: no son entregas verificadas. El indicador real con GPS efectivo es 51,3%, no 55,3%.
+  </div>
+ </section>
+
+ <section>
+  <h2>7 · Metodología aplicada</h2>
+  <ul class="method">
+   <li><b>Trazabilidad de la fuente</b> — distinción de campo nativo (distancia) vs derivado (RANGO), validación de reglas y alcance.</li>
+   <li><b>Estadística inferencial</b> — intervalos de confianza de Wilson; nada de números puntuales sin incertidumbre.</li>
+   <li><b>Atribución por corroboración cruzada</b> — nº de conductores independientes por cliente (Evidencia A) y análisis contrafactual observado-vs-esperado (Evidencia B).</li>
+   <li><b>Descomposición de varianza (ICC)</b> — partición cliente / conductor / transportista, con bootstrap.</li>
+   <li><b>Control de confusión</b> — prueba de carteras disjuntas (transportista = territorio) y Mantel-Haenszel.</li>
+   <li><b>Mecanismo de datos faltantes</b> — prueba MNAR del "pase libre" por GPS.</li>
+   <li><b>Modelado predictivo</b> — regresión logística + gradient boosting para medir el techo del contexto.</li>
+   <li><b>Análisis de proceso</b> — efecto hora del día y adherencia de secuencia de ruta.</li>
+  </ul>
+ </section>
+
+ <section>
+  <h2>8 · Recomendaciones priorizadas</h2>
+  <div class="rec"><div class="num">1</div><div class="body"><div class="h">Recalibrar la geocerca de 30 m a 100 m</div><div class="d">Deja de penalizar el ruido normal del GPS urbano. Sin cambio operativo. Reversible.</div></div><div class="imp">+16,7 pts</div></div>
+  <div class="rec"><div class="num">2</div><div class="body"><div class="h">Re-geocodificar los 190 clientes corroborados</div><div class="d">Ataca la causa raíz dominante. Lista priorizada por evidencia y severidad en el Excel adjunto.</div></div><div class="imp">~433 entregas</div></div>
+  <div class="rec"><div class="num">3</div><div class="body"><div class="h">Exigir GPS válido para cerrar entrega</div><div class="d">Elimina los 472 "pases libres" y limpia las comparaciones entre transportistas.</div></div><div class="imp">+integridad</div></div>
+  <div class="rec"><div class="num">4</div><div class="body"><div class="h">Revisar dispositivo de Morales Alzate y los 125 cierres lejanos</div><div class="d">Caso de calibración de equipo + retroalimentación puntual de marcaje. Foco, no sanción masiva.</div></div><div class="imp">~193 entregas</div></div>
+  <div class="foot" style="margin-top:6px">Proyección combinada (1+2+3) sin exigir nada nuevo a los conductores: el indicador pasa de 55% a la zona de <b>78–82%</b>.</div>
+ </section>
+
+ <section>
+  <h2>9 · Autoevaluación del análisis</h2>
+  <div class="grid2">
+   <div class="rub">
+    <div class="d">Trazabilidad y procedencia</div><div class="s">9,0</div>
+    <div class="d">Rigor metodológico</div><div class="s">9,5</div>
+    <div class="d">Fuerza de la evidencia</div><div class="s">9,0</div>
+    <div class="d">Honestidad y limitaciones</div><div class="s">10,0</div>
+    <div class="d">Accionabilidad</div><div class="s">9,0</div>
+    <div class="d">Presentación ejecutiva</div><div class="s">9,5</div>
+    <div class="d" style="font-weight:700;color:var(--navy)">Global</div><div class="s" style="font-size:16px">9,2</div>
+   </div>
+   <div>
+    <div class="warn"><b>Lo que impide el 10 (límites honestos):</b> es <b>una sola semana</b> y <b>un solo CD</b>; entre 59% y 98% de las fallas de los conductores caen en clientes que nadie más visitó esa semana, así que la mayoría no se puede desconfundir aún. Las carteras de transportistas son disjuntas → "transportista" está confundido con "territorio". No hay coordenadas lat/long para confirmar el offset como vector fijo.</div>
+    <div class="foot" style="margin-top:10px"><b>Qué lo llevaría a 10:</b> 3–4 semanas de datos (los conductores rotan y los clientes se cruzan) + las coordenadas del cliente y del marcaje.</div>
+   </div>
+  </div>
+ </section>
+
+ <footer>
+  Elaborado por Alber Mauricio Márquez · Jefe de Operaciones Inteligentes · CD Itagüí (LIS — Bavaria) ·
+  Datos: Bringg Attempt Analytics, 15–21 jun 2026 (5.753 visitas) · Análisis cuantitativo de causa raíz
+ </footer>
+</div>
+
+<script>
+const DATA = {
+ "scope": {
+  "visitas": 5753,
+  "rutas": 662,
+  "conductores": 181,
+  "clientes": 4293,
+  "transportistas": 8,
+  "fecha_ini": "2026-06-15",
+  "fecha_fin": "2026-06-21",
+  "dc": "CD Itagüí (AV05)"
+ },
+ "kpi": {
+  "reportado": 55.3,
+  "ci": [
+   55.3,
+   54.0,
+   56.6
+  ],
+  "gps_real": 51.3,
+  "a100": 72.0,
+  "fuera": 2571,
+  "fuera_pct": 44.7,
+  "pase_libre": 472,
+  "pase_libre_pct": 8.2
+ },
+ "sev": {
+  "30-100 m": 959,
+  "100-300 m": 427,
+  "300 m-1 km": 483,
+  "1-2 km": 251,
+  ">2 km": 451
+ },
+ "thr": {
+  "30": 55.3,
+  "50": 63.4,
+  "75": 68.3,
+  "100": 72.0,
+  "150": 75.1,
+  "200": 77.1,
+  "300": 79.4
+ },
+ "hour": {
+  "<8": 72.2,
+  "8-11": 65.0,
+  "11-14": 58.5,
+  "14-17": 54.5,
+  ">17": 46.1
+ },
+ "seq": {
+  "ADHERED": [
+   2987,
+   65.0
+  ],
+  "FORGIVEN": [
+   155,
+   59.4
+  ],
+  "NOT_ADHERED": [
+   2450,
+   41.1
+  ],
+  "NO_DECISION": [
+   161,
+   87.0
+  ]
+ },
+ "pilarA": {
+  "clientes": 190,
+  "entregas": 433,
+  "out_total": 2571,
+  "dist": {
+   "2": [
+    172,
+    361
+   ],
+   "3": [
+    12,
+    38
+   ],
+   "4": [
+    5,
+    24
+   ],
+   "5+": [
+    1,
+    10
+   ]
+  },
+  "top": [
+   [
+    "Albor",
+    8,
+    10,
+    99,
+    3564
+   ],
+   [
+    "Distribuidora Niquitao",
+    4,
+    5,
+    591,
+    593
+   ],
+   [
+    "Donde Martha",
+    4,
+    5,
+    440,
+    441
+   ],
+   [
+    "Distribuidora Del Nordeste",
+    4,
+    5,
+    339,
+    346
+   ],
+   [
+    "Bodega Satelite Medellin",
+    4,
+    5,
+    62,
+    70
+   ],
+   [
+    "Distribuidora La 7024",
+    4,
+    4,
+    526,
+    6883
+   ],
+   [
+    "Ospina #2",
+    3,
+    5,
+    262,
+    265
+   ],
+   [
+    "Licorera J M",
+    3,
+    3,
+    6057,
+    6094
+   ],
+   [
+    "Tienda Niquitao",
+    3,
+    3,
+    1077,
+    1083
+   ],
+   [
+    "Motivos Vip",
+    3,
+    3,
+    837,
+    881
+   ],
+   [
+    "Restaurante San Benito",
+    3,
+    3,
+    327,
+    331
+   ],
+   [
+    "Mega Mayoristas",
+    3,
+    3,
+    268,
+    272
+   ],
+   [
+    "Grupo Maruplas S.a.s",
+    3,
+    3,
+    180,
+    182
+   ],
+   [
+    "Bodega El Vendedor",
+    3,
+    3,
+    164,
+    816
+   ],
+   [
+    "Tienda L M A",
+    3,
+    3,
+    162,
+    1948
+   ],
+   [
+    "Exito Aranjuez",
+    3,
+    3,
+    128,
+    547
+   ],
+   [
+    "Mercados Casadiana",
+    3,
+    3,
+    128,
+    128
+   ],
+   [
+    "Minimercado Sol De Villanueva",
+    3,
+    3,
+    63,
+    84
+   ],
+   [
+    "Granero El Sureño",
+    2,
+    3,
+    7345,
+    7360
+   ],
+   [
+    "Granero La 112",
+    2,
+    3,
+    2872,
+    5830
+   ]
+  ]
+ },
+ "pilarB": {
+  "band_total": 869,
+  "band_clientes": 777,
+  "band_drivers": 112,
+  "loose_casos": 125,
+  "loose_clientes": 117,
+  "loose_drivers": 62,
+  "strict_casos": 97,
+  "strict_clientes": 97,
+  "gross_casos": 68,
+  "gross_clientes": 65,
+  "top": [
+   [
+    "Vargas Mejia Ruben  Dario",
+    "488484",
+    5,
+    5,
+    682
+   ],
+   [
+    "Soto Anyela Tatiana",
+    "488484",
+    5,
+    5,
+    495
+   ],
+   [
+    "Nelson De Jesus Bermudez Cardona",
+    "479960",
+    5,
+    5,
+    948
+   ],
+   [
+    "Jhon Fredys Agudelo Aguirre",
+    "488484",
+    5,
+    5,
+    971
+   ],
+   [
+    "Luis Carlos Cuervo",
+    "488484",
+    4,
+    4,
+    682
+   ],
+   [
+    "Jhonatan Nevardo Gonzalez Mejia",
+    "488484",
+    4,
+    4,
+    972
+   ],
+   [
+    "Daniel Alexander Alfonso",
+    "488484",
+    4,
+    4,
+    434
+   ],
+   [
+    "Osorno Castaño  Jhon Jairo",
+    "488484",
+    4,
+    3,
+    1021
+   ],
+   [
+    "Henry David Castro Luna",
+    "488484",
+    4,
+    4,
+    1242
+   ],
+   [
+    "Nelson Hernando Montoya Morales",
+    "488484",
+    3,
+    2,
+    944
+   ],
+   [
+    "Arenas Paniagua, Herney Dario",
+    "488484",
+    3,
+    3,
+    1096
+   ],
+   [
+    "Jaramillo, Oscar",
+    "488484",
+    3,
+    3,
+    592
+   ],
+   [
+    "Cardenas Castillo Jenner Antonio",
+    "488484",
+    3,
+    3,
+    912
+   ],
+   [
+    "Piedrahita Rua, Luis Miguel",
+    "488484",
+    3,
+    3,
+    1636
+   ],
+   [
+    "Nafer David Paez Gomez",
+    "488484",
+    2,
+    2,
+    450
+   ]
+  ]
+ },
+ "icc": {
+  "cliente": 0.386,
+  "conductor": 0.138,
+  "transportista": 0.107
+ },
+ "carrier": {
+  "reportado": {
+   "467856": 69.4,
+   "479960": 70.6,
+   "488484": 47.4
+  },
+  "gpsonly": {
+   "467856": 68.8,
+   "479960": 65.9,
+   "488484": 44.5
+  }
+ },
+ "models": {
+  "mcfadden": 0.095,
+  "auc": 0.677
+ },
+ "conductores": [
+  [
+   "Morales Alzate, Rodrigo",
+   2.3,
+   82.4,
+   17,
+   -80.1,
+   "Dispositivo",
+   "Offset fijo ~87 m; donde otros logran 82% él logra 2%"
+  ],
+  [
+   "Soto Anyela Tatiana",
+   19.2,
+   72.4,
+   7,
+   -53.2,
+   "Conductor",
+   "Peor que pares (-53), evidencia limitada (n=7)"
+  ],
+  [
+   "Arango Uñate Luis Fernando",
+   22.7,
+   55.6,
+   27,
+   -32.8,
+   "Conductor",
+   "Peor que pares (-33) en sus mismos clientes"
+  ],
+  [
+   "Vargas Mejía Rubén Darío",
+   23.3,
+   34.3,
+   35,
+   -11.0,
+   "Geocode",
+   "Otros también fallan (34%): es el territorio"
+  ],
+  [
+   "Osorno Castaño Jhon Jairo",
+   27.0,
+   35.5,
+   31,
+   -8.5,
+   "Geocode",
+   "Otros también fallan (35%): es el territorio"
+  ],
+  [
+   "Hincapié Córdoba Oscar A.",
+   21.6,
+   null,
+   1,
+   null,
+   "Indeterminado",
+   "98% de sus clientes sin comparación"
+  ]
+ ]
+};
+const NAVY="#1B3A5B",TEAL="#0E9C8E",BLUE="#2563EB",AMBER="#E0A100",RED="#C0392B",GREEN="#2E8B57",SLATE="#8A94A6";
+const fmt=n=>new Intl.NumberFormat('es-CO').format(n);
+document.getElementById('period').textContent=DATA.scope.fecha_ini+" a "+DATA.scope.fecha_fin+" · "+DATA.scope.dc;
+
+// KPI cards
+const k=DATA.kpi;
+document.getElementById('kpis').innerHTML=`
+ <div class="kpi"><div class="lab">Indicador reportado</div><div class="val">${k.reportado}%</div><div class="note">IC95% ${k.ci[1]}–${k.ci[2]} · n=${fmt(DATA.scope.visitas)}</div></div>
+ <div class="kpi alert"><div class="lab">Con GPS efectivo</div><div class="val">${k.gps_real}%</div><div class="note">excluye ${k.pase_libre} sin GPS (${k.pase_libre_pct}%)</div></div>
+ <div class="kpi good"><div class="lab">Si geocerca = 100 m</div><div class="val">${k.a100}%</div><div class="note">sin cambio operativo</div></div>
+ <div class="kpi"><div class="lab">Fuera de rango</div><div class="val">${fmt(k.fuera)}</div><div class="note">${k.fuera_pct}% de las visitas</div></div>
+ <div class="kpi"><div class="lab">Varianza por cliente (ICC)</div><div class="val">39%</div><div class="note">vs 14% conductor</div></div>`;
+
+const baseOpts=(extra={})=>Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}},extra);
+
+// Severity
+new Chart(cSev,{type:'bar',data:{labels:Object.keys(DATA.sev),datasets:[{data:Object.values(DATA.sev),
+ backgroundColor:[AMBER,'#D98324','#C0392B','#A02B1F','#7A1E16']}]},
+ options:baseOpts({scales:{y:{title:{display:true,text:'entregas'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.y)+' entregas'}}}})});
+
+// Threshold
+const thK=Object.keys(DATA.thr),thV=Object.values(DATA.thr);
+new Chart(cThr,{type:'line',data:{labels:thK.map(x=>x+' m'),datasets:[{data:thV,borderColor:TEAL,backgroundColor:'rgba(14,156,142,.12)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:thK.map(x=>x==='100'?GREEN:TEAL)}]},
+ options:baseOpts({scales:{y:{min:50,max:82,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+'% en rango'}}}})});
+
+// Pillar A distribution
+const aK=Object.keys(DATA.pilarA.dist),aCli=aK.map(x=>DATA.pilarA.dist[x][0]);
+new Chart(cA,{type:'bar',data:{labels:aK.map(x=>x+' conductores'),datasets:[{data:aCli,backgroundColor:[BLUE,'#1E50C0','#163E96','#0E2C6E']}]},
+ options:baseOpts({indexAxis:'y',scales:{x:{title:{display:true,text:'clientes'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' clientes · '+DATA.pilarA.dist[aK[c.dataIndex]][1]+' entregas'}}}})});
+
+// ICC
+new Chart(cICC,{type:'bar',data:{labels:['Cliente (geocode)','Conductor','Transportista'],datasets:[{data:[DATA.icc.cliente,DATA.icc.conductor,DATA.icc.transportista],backgroundColor:[BLUE,RED,SLATE]}]},
+ options:baseOpts({scales:{y:{max:.45,title:{display:true,text:'ICC'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'ICC '+c.parsed.y.toFixed(3)}}}})});
+
+// Hour
+const hK=Object.keys(DATA.hour),hV=Object.values(DATA.hour);
+new Chart(cHour,{type:'line',data:{labels:hK,datasets:[{data:hV,borderColor:RED,backgroundColor:'rgba(192,57,43,.10)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:RED}]},
+ options:baseOpts({scales:{y:{min:40,max:80,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+'% en rango'}}}})});
+
+// Tables
+document.getElementById('tA').innerHTML=DATA.pilarA.top.map(r=>`<tr><td>${r[0]}</td><td class="c">${r[1]}</td><td class="c">${r[2]}</td><td class="r">${r[3]==null?'s/d':fmt(r[3])+' m'}</td></tr>`).join('');
+document.getElementById('tB').innerHTML=DATA.pilarB.top.map(r=>`<tr><td>${r[0]}</td><td class="c">${r[2]}</td><td class="c">${r[3]}</td><td class="r">${fmt(r[4])} m</td></tr>`).join('');
+const bcls={Geocode:'b-geo',Conductor:'b-con',Dispositivo:'b-dev',Indeterminado:'b-ind'};
+document.getElementById('tC').innerHTML=DATA.conductores.map(r=>`<tr><td>${r[0]}</td><td class="c">${r[1]}%</td><td class="c">${r[2]==null?'—':r[2]+'% (n='+r[3]+')'}</td><td class="c">${r[4]==null?'—':r[4]}</td><td><span class="bdg ${bcls[r[5]]}">${r[5]}</span></td><td style="font-size:12px;color:var(--slate)">${r[6]}</td></tr>`).join('');
+</script>
+</body>
+</html>
